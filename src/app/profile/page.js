@@ -9,8 +9,9 @@ export default function ProfilePage() {
   const { status, data } = session;
   const [userName, setUserName] = useState("");
   const [saved, setSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const userImage = data?.user?.image;
-  console.log(session);
+  console.log(session); 
 
   useEffect(() => {
     if (status === "authenticated") setUserName(data?.user?.name);
@@ -25,15 +26,35 @@ export default function ProfilePage() {
 
   const handleProflieInfoUpdate = async (e) => {
     e.preventDefault();
+    setSaved(false);
+    setIsSaving(true);
     try {
       const res = await axios.put("/api/profile", { name: userName });
       console.log(res);
 
-      if (res.status ===200) {
+      if (res.status === 200) {
         setSaved(true);
       }
+      setIsSaving(false);
     } catch (err) {
       console.log(err);
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const files = e.target.files[0];
+    // console.log(e.target.files[0]);
+    // console.log(e.target.files);
+
+    if (files) {
+      const data = new FormData();
+      data.append("files", files);
+      const res = await axios("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "multipart/form-data" },
+        body: data,
+      });
+      console.log(res);
     }
   };
 
@@ -49,6 +70,11 @@ export default function ProfilePage() {
             Profile saved!
           </h2>
         )}
+        {isSaving && (
+          <h2 className=" text-center bg-blue-100 p-4 rounded-lg border border-blue-300">
+            Saving...
+          </h2>
+        )}
         <div className="flex gap-2 items-center">
           <div className="bg-gray-100 p-1 rounded-md">
             <img
@@ -58,7 +84,16 @@ export default function ProfilePage() {
               width={125}
               height={125}
             />
-            <button className="mt-1">Change Avatar</button>
+            <label>
+              <input
+                type="file"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+              <span className="border rounded-lg p-2 block text-center cursor-pointer border-gray-300 mt-1">
+                Edit
+              </span>
+            </label>
           </div>
           <form onSubmit={handleProflieInfoUpdate} className="grow">
             <input
